@@ -1,0 +1,9 @@
+# Input paths 
+database: 
+  path: "sql/box_office.db"
+  table: "movies_cleaned"
+
+# Output paths
+output:
+  cleaned_data_path: "output/cleaned_movies.csv"
+  plots_dir: "output/plots"
