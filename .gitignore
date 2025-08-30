@@ -14,3 +14,6 @@ venv/
 
 # VSCode
 .vscode/
+
+# Output files
+output/
