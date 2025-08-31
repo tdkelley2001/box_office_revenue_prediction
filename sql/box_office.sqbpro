@@ -1,123 +1,123 @@
-<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="box_office.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2427"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="movies_cleaned" custom_title="0" dock_id="1" table="4,14:mainmovies_cleaned"/><dock_state state="000000ff00000000fd00000001000000020000032a0000024efc0100000001fb000000160064006f0063006b00420072006f007700730065003101000000000000032a0000012d00ffffff000002580000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="credits_raw" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort><column index="0" mode="0"/></sort><column_widths><column index="1" value="64"/><column index="2" value="31"/><column index="3" value="31"/><column index="4" value="34"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="movies_cleaned" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="78"/><column index="2" value="300"/><column index="3" value="300"/><column index="4" value="39"/><column index="5" value="300"/><column index="6" value="108"/><column index="7" value="300"/><column index="8" value="300"/><column index="9" value="85"/><column index="10" value="300"/><column index="11" value="300"/><column index="12" value="85"/><column index="13" value="85"/><column index="14" value="52"/><column index="15" value="300"/><column index="16" value="70"/><column index="17" value="300"/><column index="18" value="300"/><column index="19" value="84"/><column index="20" value="71"/><column index="21" value="300"/><column index="22" value="300"/><column index="23" value="40"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="movies_raw" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="29"/><column index="2" value="31"/><column index="3" value="47"/><column index="4" value="53"/><column index="5" value="46"/><column index="6" value="108"/><column index="7" value="65"/><column index="8" value="80"/><column index="9" value="52"/><column index="10" value="84"/><column index="11" value="71"/><column index="12" value="134"/><column index="13" value="59"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="create_tables">-- Drop tables if they already exist
-DROP TABLE IF EXISTS movies_raw;
-DROP TABLE IF EXISTS credits_raw;
-
--- Create table for movies
-CREATE TABLE movies_raw (
-    budget INTEGER,
-	genres TEXT,
-	homepage TEXT,
-	id INTEGER PRIMARY KEY,
-	keywords TEXT,
-	original_language TEXT,
-    original_title TEXT,
-	overview TEXT,
-	popularity REAL,
-	production_companies TEXT,
-	production_countries TEXT,
-	release_date TEXT,
-    revenue INTEGER,
-    runtime REAL,
-	spoken_languages TEXT,
-	status TEXT,
-	tagline TEXT,
-	title TEXT,
-    vote_average REAL,
-    vote_count INTEGER   
-);
-
--- Create table for credits
-CREATE TABLE credits_raw (
-    movie_id INTEGER PRIMARY KEY,
-    title TEXT,
-    cast TEXT,
-    crew TEXT
-);
-</sql><sql name="eda*">SELECT
-  -- General Info
-  (SELECT COUNT(*) FROM movies_raw) AS total_rows,
-  
-  -- Status overview
-  (SELECT COUNT(*) FROM movies_raw WHERE status IS NULL OR TRIM(status) = '') AS status_missing_or_blank,
-  (SELECT COUNT(*) FROM movies_raw WHERE status = 'Released') AS status_released,
-  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE status = 'Released') / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_status_released,
-
-  -- Revenue issues
-  (SELECT COUNT(*) FROM movies_raw WHERE revenue IS NULL OR revenue = 0) AS revenue_missing_or_zero,
-  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE revenue IS NULL OR revenue = 0) / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_revenue_missing_or_zero,
-  (SELECT MIN(revenue) FROM movies_raw WHERE revenue IS NOT NULL) AS min_revenue,
-  (SELECT MAX(revenue) FROM movies_raw) AS max_revenue,
-
-  -- Budget issues
-  (SELECT COUNT(*) FROM movies_raw WHERE budget IS NULL OR budget = 0) AS budget_missing_or_zero,
-  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE budget IS NULL OR budget = 0) / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_budget_missing_or_zero,
-  (SELECT MIN(budget) FROM movies_raw WHERE budget IS NOT NULL) AS min_budget,
-  (SELECT MAX(budget) FROM movies_raw) AS max_budget,
-
-  -- Duplicates
-  (SELECT COUNT(*) FROM (
-      SELECT title, release_date, COUNT(*) 
-      FROM movies_raw 
-      GROUP BY title, release_date 
-      HAVING COUNT(*) &gt; 1
-  )) AS possible_duplicates
-;
-</sql><sql name="filter_tracking*">WITH
-  total AS (
-    SELECT COUNT(*) AS count_total FROM movies_raw
-  ),
-  
-  after_status AS (
-    SELECT COUNT(*) AS count_after_status FROM movies_raw
-    WHERE status = 'Released'
-  ),
-  
-  after_revenue AS (
-    SELECT COUNT(*) AS count_after_revenue FROM movies_raw
-    WHERE status = 'Released'
-      AND revenue IS NOT NULL
-      AND revenue != 0
-      AND TRIM(revenue) != ''
-  ),
-  
-  after_budget AS (
-    SELECT COUNT(*) AS count_after_budget FROM movies_raw
-    WHERE status = 'Released'
-      AND revenue IS NOT NULL
-      AND revenue != 0
-      AND TRIM(revenue) != ''
-      AND budget IS NOT NULL
-      AND budget != 0
-      AND TRIM(budget) != ''
-  )
-
-SELECT
-  total.count_total,
-  after_status.count_after_status,
-  after_revenue.count_after_revenue,
-  after_budget.count_after_budget,
-  total.count_total - after_status.count_after_status AS lost_after_status,
-  after_status.count_after_status - after_revenue.count_after_revenue AS lost_after_revenue,
-  after_revenue.count_after_revenue - after_budget.count_after_budget AS lost_after_budget
-FROM total, after_status, after_revenue, after_budget;
-</sql><sql name="SQL 5*">--Create target variable and join tables together, filting out non-released movies, and those with 0 or null budget or revenue
-CREATE TABLE movies_cleaned AS
-SELECT
-    m.*,
-    c.cast,
-    c.crew,
-    CASE 
-        WHEN CAST(m.revenue AS REAL) &lt; CAST(m.budget AS REAL) THEN 1
-        ELSE 0
-    END AS bomb
-FROM movies_raw m
-JOIN credits_raw c ON m.id = c.movie_id
-WHERE
-    m.status = 'Released'
-    AND m.revenue IS NOT NULL
-    AND m.revenue != 0
-    AND TRIM(m.revenue) != ''
-    AND m.budget IS NOT NULL
-    AND m.budget != 0
-    AND TRIM(m.budget) != '';
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="box_office.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2427"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="movies_cleaned" custom_title="0" dock_id="1" table="4,14:mainmovies_cleaned"/><dock_state state="000000ff00000000fd0000000100000002000002ea00000256fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000002ea0000012d00ffffff000002ea0000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="credits_raw" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort><column index="0" mode="0"/></sort><column_widths><column index="1" value="64"/><column index="2" value="31"/><column index="3" value="31"/><column index="4" value="34"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="movies_cleaned" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="78"/><column index="2" value="300"/><column index="3" value="300"/><column index="4" value="39"/><column index="5" value="300"/><column index="6" value="108"/><column index="7" value="300"/><column index="8" value="300"/><column index="9" value="85"/><column index="10" value="300"/><column index="11" value="300"/><column index="12" value="85"/><column index="13" value="85"/><column index="14" value="52"/><column index="15" value="300"/><column index="16" value="70"/><column index="17" value="300"/><column index="18" value="300"/><column index="19" value="84"/><column index="20" value="71"/><column index="21" value="300"/><column index="22" value="300"/><column index="23" value="40"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="movies_raw" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="29"/><column index="2" value="31"/><column index="3" value="47"/><column index="4" value="53"/><column index="5" value="46"/><column index="6" value="108"/><column index="7" value="65"/><column index="8" value="80"/><column index="9" value="52"/><column index="10" value="84"/><column index="11" value="71"/><column index="12" value="134"/><column index="13" value="59"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="create_tables">-- Drop tables if they already exist
+DROP TABLE IF EXISTS movies_raw;
+DROP TABLE IF EXISTS credits_raw;
+
+-- Create table for movies
+CREATE TABLE movies_raw (
+    budget INTEGER,
+	genres TEXT,
+	homepage TEXT,
+	id INTEGER PRIMARY KEY,
+	keywords TEXT,
+	original_language TEXT,
+    original_title TEXT,
+	overview TEXT,
+	popularity REAL,
+	production_companies TEXT,
+	production_countries TEXT,
+	release_date TEXT,
+    revenue INTEGER,
+    runtime REAL,
+	spoken_languages TEXT,
+	status TEXT,
+	tagline TEXT,
+	title TEXT,
+    vote_average REAL,
+    vote_count INTEGER   
+);
+
+-- Create table for credits
+CREATE TABLE credits_raw (
+    movie_id INTEGER PRIMARY KEY,
+    title TEXT,
+    cast TEXT,
+    crew TEXT
+);
+</sql><sql name="eda">SELECT
+  -- General Info
+  (SELECT COUNT(*) FROM movies_raw) AS total_rows,
+  
+  -- Status overview
+  (SELECT COUNT(*) FROM movies_raw WHERE status IS NULL OR TRIM(status) = '') AS status_missing_or_blank,
+  (SELECT COUNT(*) FROM movies_raw WHERE status = 'Released') AS status_released,
+  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE status = 'Released') / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_status_released,
+
+  -- Revenue issues
+  (SELECT COUNT(*) FROM movies_raw WHERE revenue IS NULL OR revenue = 0) AS revenue_missing_or_zero,
+  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE revenue IS NULL OR revenue = 0) / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_revenue_missing_or_zero,
+  (SELECT MIN(revenue) FROM movies_raw WHERE revenue IS NOT NULL) AS min_revenue,
+  (SELECT MAX(revenue) FROM movies_raw) AS max_revenue,
+
+  -- Budget issues
+  (SELECT COUNT(*) FROM movies_raw WHERE budget IS NULL OR budget = 0) AS budget_missing_or_zero,
+  ROUND(100.0 * (SELECT COUNT(*) FROM movies_raw WHERE budget IS NULL OR budget = 0) / (SELECT COUNT(*) FROM movies_raw), 2) AS pct_budget_missing_or_zero,
+  (SELECT MIN(budget) FROM movies_raw WHERE budget IS NOT NULL) AS min_budget,
+  (SELECT MAX(budget) FROM movies_raw) AS max_budget,
+
+  -- Duplicates
+  (SELECT COUNT(*) FROM (
+      SELECT title, release_date, COUNT(*) 
+      FROM movies_raw 
+      GROUP BY title, release_date 
+      HAVING COUNT(*) &gt; 1
+  )) AS possible_duplicates
+;
+</sql><sql name="filter_tracking">WITH
+  total AS (
+    SELECT COUNT(*) AS count_total FROM movies_raw
+  ),
+  
+  after_status AS (
+    SELECT COUNT(*) AS count_after_status FROM movies_raw
+    WHERE status = 'Released'
+  ),
+  
+  after_revenue AS (
+    SELECT COUNT(*) AS count_after_revenue FROM movies_raw
+    WHERE status = 'Released'
+      AND revenue IS NOT NULL
+      AND revenue != 0
+      AND TRIM(revenue) != ''
+  ),
+  
+  after_budget AS (
+    SELECT COUNT(*) AS count_after_budget FROM movies_raw
+    WHERE status = 'Released'
+      AND revenue IS NOT NULL
+      AND revenue != 0
+      AND TRIM(revenue) != ''
+      AND budget IS NOT NULL
+      AND budget != 0
+      AND TRIM(budget) != ''
+  )
+
+SELECT
+  total.count_total,
+  after_status.count_after_status,
+  after_revenue.count_after_revenue,
+  after_budget.count_after_budget,
+  total.count_total - after_status.count_after_status AS lost_after_status,
+  after_status.count_after_status - after_revenue.count_after_revenue AS lost_after_revenue,
+  after_revenue.count_after_revenue - after_budget.count_after_budget AS lost_after_budget
+FROM total, after_status, after_revenue, after_budget;
+</sql><sql name="merge_tables">--Create target variable and join tables together, filting out non-released movies, and those with 0 or null budget or revenue
+CREATE TABLE movies_cleaned AS
+SELECT
+    m.*,
+    c.cast,
+    c.crew,
+    CASE 
+        WHEN CAST(m.revenue AS REAL) &lt; CAST(m.budget AS REAL) THEN 1
+        ELSE 0
+    END AS bomb
+FROM movies_raw m
+JOIN credits_raw c ON m.id = c.movie_id
+WHERE
+    m.status = 'Released'
+    AND m.revenue IS NOT NULL
+    AND m.revenue != 0
+    AND TRIM(m.revenue) != ''
+    AND m.budget IS NOT NULL
+    AND m.budget != 0
+    AND TRIM(m.budget) != '';
 </sql><current_tab id="3"/></tab_sql></sqlb_project>

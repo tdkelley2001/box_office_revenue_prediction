@@ -1,7 +1,10 @@
+import os
 import sqlite3
 import pandas as pd
 
-def load_movie_data(config):
+POINTER_FILE = "output/latest_preprocessed.txt"
+
+def load_data(config):
     db_path = config["database"]["path"]
     table = config["database"]["table"]
     
@@ -10,3 +13,13 @@ def load_movie_data(config):
     conn.close()
     
     return df
+
+def load_latest_preprocessed():
+    if not os.path.exists(POINTER_FILE):
+        return None
+    with open(POINTER_FILE) as f:
+        latest_file = f.read().strip()
+    if not os.path.exists(latest_file):
+        return None
+    print(f"Loading latest preprocessed dataset: {latest_file}")
+    return pd.read_csv(latest_file)
