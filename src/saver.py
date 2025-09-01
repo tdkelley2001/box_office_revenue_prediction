@@ -1,23 +1,19 @@
 import os
 from src.utils import ts
 
-POINTER_PREPROCESSED = "output/latest_paths/latest_preprocessed.txt"
-POINTER_MODEL = "output/latest_paths/latest_model_ready.txt"
 
 def save_cleaned_data(df, config, key="preprocessed_data_path"):
-    base_path = config["output"][key]
+    base_path = config["output"][key]["path"]
+    ts_path = f"{os.path.splitext(base_path)[0]}_{ts}.csv"
     
-    root, ext = os.path.splitext(base_path)
-    output_path = f"{root}_{ts}{ext}"
+    os.makedirs(os.path.dirname(ts_path), exist_ok=True)
+    df.to_csv(ts_path, index=False)
+    print(f"Saved: {ts_path}")
     
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    df.to_csv(output_path, index=False)
-    print(f"Saved: {output_path}")
+    # Update pointer file dynamically from config
+    pointer_path = config["output"][key]["pointer"]
     
-    # Update pointer files
-    if key == "preprocessed_data_path":
-        with open(POINTER_PREPROCESSED, "w") as f:
-            f.write(output_path)
-    elif key == "model_data_path":
-        with open(POINTER_MODEL, "w") as f:
-            f.write(output_path)
+    if pointer_path:
+        with open(pointer_path, "w") as f:
+            f.write(ts_path)
+        print(f"Updated pointer: {pointer_path}")

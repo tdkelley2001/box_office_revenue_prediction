@@ -2,7 +2,6 @@ import os
 import sqlite3
 import pandas as pd
 
-POINTER_FILE = "output/latest_preprocessed.txt"
 
 def load_data(config):
     db_path = config["database"]["path"]
@@ -14,12 +13,14 @@ def load_data(config):
     
     return df
 
-def load_latest_preprocessed():
-    if not os.path.exists(POINTER_FILE):
+
+def load_latest_from_pointer(pointer_path):
+    if not os.path.exists(pointer_path):
         return None
-    with open(POINTER_FILE) as f:
-        latest_file = f.read().strip()
-    if not os.path.exists(latest_file):
+    with open(pointer_path) as f:
+        path = f.read().strip()
+    if not os.path.exists(path):
         return None
-    print(f"Loading latest preprocessed dataset: {latest_file}")
-    return pd.read_csv(latest_file)
+    print(f"Loading dataset from pointer: {path}")
+    return pd.read_csv(path)
+
