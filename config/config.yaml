@@ -76,36 +76,55 @@ feature_engineering:
     genres_list:
       list_col: true
       min_count: 30
-      cumulative_pct: 0.8
       top_n: null
+      cumulative_pct: 0.8
     keywords_list:
       list_col: true
       min_count: 30
-      cumulative_pct: 0.8
       top_n: null
+      cumulative_pct: 0.8
     production_companies_list:
       list_col: true
       min_count: 30
-      cumulative_pct: 0.8
       top_n: null
+      cumulative_pct: 0.8
     production_countries_list:
       list_col: true
       min_count: 30
-      cumulative_pct: 0.8
       top_n: null
+      cumulative_pct: 0.8
     spoken_languages_list:
       list_col: true
       min_count: 30
-      cumulative_pct: 0.8
       top_n: null
+      cumulative_pct: 0.8
     original_language:
       list_col: false
       min_count: 30
-      cumulative_pct: 0.9
       top_n: null
+      cumulative_pct: 0.9
 
-# ---------------- EDA Round 2 ----------------
-eda_round2:
+
+# ---------------- Postprocessing ----------------
+postprocessing:
+  winsorization:
+    budget: 1.0
+    budget_log: 1.0
+    runtime: 1.0
+    title_length: 1.0
+    overview_length: 1.0
+    tagline_length: 1.0
+  categorical_vars:
+  imputation:
+    numeric_impute_method: median
+    categorical_impute_method: most_frequent
+  test_train_split:
+    test_size: 0.2
+    random_state: 42
+
+
+# ---------------- SFA ----------------
+postprocessing:
   numeric_columns:
     - budget
     - budget_log
@@ -119,7 +138,7 @@ eda_round2:
     - production_companies_list_
     - production_countries_list_
     - spoken_languages_list_
-    - original_language_
+    - original_language
     - has_homepage
     - has_tagline
     - is_summer

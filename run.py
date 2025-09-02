@@ -4,7 +4,7 @@ from src.loader import load_data, load_latest_from_pointer
 from src.preprocessing import preprocess_data, run_feature_engineering
 from src.saver import save_cleaned_data
 from src.eda import run_eda_round1, run_eda_round2
-#from src.postprocessing import prepare_modeling_dataset
+from src.postprocessing import postprocess_data
 import pandas as pd
 
 
@@ -52,18 +52,19 @@ if config.get("do_round2_eda", True):
 # ------------------------
 # Step 5: Postprocessing / Modeling Prep
 # ------------------------
-movies_model = load_latest_from_pointer(config["output"]["modeling_data"]["pointer"])
+movies_model = load_latest_from_pointer(config["output"]["model_data"]["pointer"])
 if movies_model is None:
     print("No model dataset found, running postprocessing...")
-    # TODO: Develop postprocessing for windsorization and missing imputation
+    movies_model = postprocess_data(movies_cleaned, config)
     if config["save_modeling_data"]:
-        save_cleaned_data(movies_model, config, key="modeling_data")
+        save_cleaned_data(movies_model, config, key="model_data")
 
 
 # ------------------------
 # Step 5: Run Single-Factor Analysis
 # ------------------------
 # TODO: Develop SFA
+
 
 # ------------------------
 # Step 6: Run Multi-Factor Analysis

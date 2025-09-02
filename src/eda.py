@@ -128,9 +128,9 @@ def run_eda_round2(df, config):
     output_dir = config["output"]["eda_round2_dir"]
     os.makedirs(output_dir, exist_ok=True)
 
-    numeric_cols = config["eda_round2"]["numeric_columns"]
-    indicator_prefixes = config["eda_round2"]["indicator_prefixes"]
-    target_col = config["eda_round2"]["target"]
+    numeric_cols = config["sfa"]["numeric_columns"]
+    indicator_prefixes = config["sfa"]["indicator_prefixes"]
+    target_col = config["sfa"]["target"]
 
     # Timestamped output file
     excel_path = os.path.join(output_dir, f"eda_round2_{ts}.xlsx")

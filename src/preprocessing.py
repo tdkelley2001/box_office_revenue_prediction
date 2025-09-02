@@ -2,6 +2,7 @@ import ast
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
+from src.utils import safe_literal_eval
 
 def parse_json_columns(df, cols):
     """Parse JSON-like string columns into lists of names."""
@@ -48,67 +49,76 @@ def preprocess_data(df, config):
     return df_filtered
 
 
-def create_indicators(
-    df: pd.DataFrame,
-    var: str,
-    top_n: int = None,
-    cumulative_pct: float = None,
-    list_col: bool = True,
-    min_count: int = None
-):
-    """
-    Create indicator columns for a categorical or list variable.
-
-    Parameters:
-        df: DataFrame
-        var: Column name
-        top_n: Keep top N levels (optional)
-        cumulative_pct: Keep levels until cumulative coverage (optional)
-        list_col: If True, the column contains lists
-        min_count: Minimum number of occurrences for a level to be included (optional)
-
-    Returns:
-        df with new indicator columns
-    """
-    if var not in df.columns:
-        return df
-
-    # Flatten values for list columns
+def get_counts(df, var, list_col=True):
+    """Return value counts for a column, handling list vs categorical."""
     if list_col:
-        all_items = df[var].explode()
+        df[var] = df[var].apply(safe_literal_eval)
+        return df[var].explode().value_counts()
     else:
-        all_items = df[var]
+        return df[var].value_counts()
 
-    counts = all_items.value_counts()
 
-    # Apply min_count filter if specified
-    if min_count is not None:
-        counts = counts[counts >= min_count]
-
-    # Determine which levels to keep
+def select_levels(counts, top_n=None, cumulative_pct=None):
+    """Select levels based on top_n or cumulative percentage coverage."""
     if top_n is not None:
-        keep_levels = counts.head(top_n).index.tolist()
+        keep = counts.head(top_n).index.tolist()
     elif cumulative_pct is not None:
         cumsum = counts.cumsum() / counts.sum()
-        keep_levels = cumsum[cumsum <= cumulative_pct].index.tolist()
+        keep = cumsum[cumsum <= cumulative_pct].index.tolist()
+        # Guarantee at least one level
+        if not keep and len(counts) > 0:
+            keep = [counts.index[0]]
     else:
-        keep_levels = counts.index.tolist()
+        keep = counts.index.tolist()
+    return keep
 
-    # Create indicators
+
+def apply_min_count(counts, keep_levels, min_count=None):
+    """Filter levels by minimum count."""
+    if min_count is not None:
+        keep_levels = [lvl for lvl in keep_levels if counts.get(lvl, 0) >= min_count]
+    return keep_levels
+
+
+def create_indicator_columns(df, var, keep_levels, list_col=True):
+    """Create indicator columns for the selected levels, plus an 'Other' column."""
     for level in keep_levels:
+        colname = f"{var}_{level}"
         if list_col:
-            df[f"{var}_{level}"] = df[var].apply(lambda x: int(level in x) if isinstance(x, list) else 0)
+            df[colname] = df[var].apply(lambda x: int(level in x) if isinstance(x, list) else 0)
         else:
-            df[f"{var}_{level}"] = (df[var] == level).astype(int)
+            df[colname] = (df[var] == level).astype(int)
 
-    # Optional: create 'Other' column
-    df[f"{var}_Other"] = 0
+    # 'Other' column
     if list_col:
         df[f"{var}_Other"] = df[var].apply(
             lambda x: int(any(i not in keep_levels for i in x)) if isinstance(x, list) else 0
         )
     else:
         df[f"{var}_Other"] = (~df[var].isin(keep_levels)).astype(int)
+
+    return df
+
+def create_indicators(
+    df,
+    var,
+    top_n=None,
+    cumulative_pct=None,
+    list_col=True,
+    min_count=None
+):
+    """
+    Main wrapper for indicator creation.
+    Selects levels based on top_n / cumulative_pct,
+    filters with min_count, and creates indicator columns.
+    """
+    if var not in df.columns:
+        return df
+
+    counts = get_counts(df, var, list_col=list_col)
+    keep_levels = select_levels(counts, top_n=top_n, cumulative_pct=cumulative_pct)
+    keep_levels = apply_min_count(counts, keep_levels, min_count=min_count)
+    df = create_indicator_columns(df, var, keep_levels, list_col=list_col)
 
     return df
 
