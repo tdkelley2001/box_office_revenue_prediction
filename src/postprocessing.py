@@ -47,12 +47,13 @@ def impute_missing(df, numeric_cols, categorical_cols,
                 raise ValueError(f"Unsupported numeric imputation method: {numeric_method}")
     
     # Categorical / indicator
-    for col in categorical_cols:
-        if df_proc[col].isnull().any():
-            if categorical_method == "most_frequent":
-                df_proc[col].fillna(df_proc[col].mode()[0], inplace=True)
-            else:
-                raise ValueError(f"Unsupported categorical imputation method: {categorical_method}")
+    if categorical_cols is not None:
+        for col in categorical_cols:
+            if df_proc[col].isnull().any():
+                if categorical_method == "most_frequent":
+                    df_proc[col].fillna(df_proc[col].mode()[0], inplace=True)
+                else:
+                    raise ValueError(f"Unsupported categorical imputation method: {categorical_method}")
     
     return df_proc
 
@@ -95,7 +96,7 @@ def postprocess_data(df, config):
     df_proc = winsorize_df(df_proc, config)
 
     # ---------- Missing Imputation ----------
-    numeric_cols = config["postprocessing"]["winsorization"].items()
+    numeric_cols = config["postprocessing"]["winsorization"].keys()
     categorical_cols = config["postprocessing"].get("categorical_vars", [])
     df_proc = impute_missing(df_proc, numeric_cols, categorical_cols)
 

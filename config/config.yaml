@@ -2,7 +2,7 @@
 save_preprocessed_data: True
 do_round1_eda: False
 save_feature_engineered_data: True
-do_round2_eda: True
+do_round2_eda: False
 save_modeling_data: True
 do_sfa: True
 do_mfa: True
@@ -23,10 +23,12 @@ output:
     path: "output/data/fe_data/movies_fe.csv"
     pointer: "output/data/latest_paths/movies_fe.txt"
   model_data:
-    path: "outputs/data/modeling_data/movies_model.csv"
+    path: "output/data/modeling_data/movies_model.csv"
     pointer: "output/data/latest_paths/latest_model.txt"
   eda_round1_dir: "output/modeling/eda/eda_round1"
   eda_round2_dir: "output/modeling/eda/eda_round2"
+  sfa_dir: "output/modeling/sfa/raw"
+  mfa_dir: "output/modeling/sfa/raw"
 
 
 # ---------------- Preprocessing ----------------
@@ -124,7 +126,7 @@ postprocessing:
 
 
 # ---------------- SFA ----------------
-postprocessing:
+sfa:
   numeric_columns:
     - budget
     - budget_log
@@ -138,7 +140,7 @@ postprocessing:
     - production_companies_list_
     - production_countries_list_
     - spoken_languages_list_
-    - original_language
+    - original_language_
     - has_homepage
     - has_tagline
     - is_summer

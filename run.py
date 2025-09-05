@@ -5,8 +5,11 @@ from src.preprocessing import preprocess_data, run_feature_engineering
 from src.saver import save_cleaned_data
 from src.eda import run_eda_round1, run_eda_round2
 from src.postprocessing import postprocess_data
+from src.sfa import run_sfa
 import pandas as pd
 
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # Load config
 config = config("config/config.yaml")
@@ -55,7 +58,7 @@ if config.get("do_round2_eda", True):
 movies_model = load_latest_from_pointer(config["output"]["model_data"]["pointer"])
 if movies_model is None:
     print("No model dataset found, running postprocessing...")
-    movies_model = postprocess_data(movies_cleaned, config)
+    movies_model = postprocess_data(movies_fe, config)
     if config["save_modeling_data"]:
         save_cleaned_data(movies_model, config, key="model_data")
 
@@ -63,7 +66,9 @@ if movies_model is None:
 # ------------------------
 # Step 5: Run Single-Factor Analysis
 # ------------------------
-# TODO: Develop SFA
+if config.get("do_sfa", True):
+    train_data = movies_model[movies_model["split"] == "train"]
+    run_sfa(train_data, config)
 
 
 # ------------------------
