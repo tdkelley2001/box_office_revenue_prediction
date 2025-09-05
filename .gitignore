@@ -14,3 +14,7 @@ venv/
 
 # VSCode
 .vscode/
+
+# Output files
+output/
+!output/modeling/sfa/structured_sfa.xlsx

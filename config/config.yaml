@@ -1,9 +1,147 @@
-# Input paths 
+# ---------------- Pipeline ----------------
+save_preprocessed_data: True
+do_round1_eda: False
+save_feature_engineered_data: True
+do_round2_eda: False
+save_modeling_data: True
+do_sfa: True
+do_mfa: True
+
+
+# ---------------- Database ----------------
 database: 
   path: "sql/box_office.db"
   table: "movies_cleaned"
 
-# Output paths
+
+# ---------------- Output ----------------
 output:
-  cleaned_data_path: "output/cleaned_movies.csv"
-  plots_dir: "output/plots"
+  preprocessed_data:
+    path: "output/data/cleaned_data/movies_preprocessed.csv"
+    pointer: "output/data/latest_paths/latest_preprocessed.txt"
+  feature_engineered_data:
+    path: "output/data/fe_data/movies_fe.csv"
+    pointer: "output/data/latest_paths/movies_fe.txt"
+  model_data:
+    path: "output/data/modeling_data/movies_model.csv"
+    pointer: "output/data/latest_paths/latest_model.txt"
+  eda_round1_dir: "output/modeling/eda/eda_round1"
+  eda_round2_dir: "output/modeling/eda/eda_round2"
+  sfa_dir: "output/modeling/sfa/raw"
+  mfa_dir: "output/modeling/sfa/raw"
+
+
+# ---------------- Preprocessing ----------------
+raw_vars:
+  date_cols:
+    - release_date
+  parse_cols:
+    - genres
+    - keywords
+    - production_companies
+    - production_countries
+    - spoken_languages
+  drop_cols:
+    - popularity
+    - title
+    - vote_average
+    - vote_count
+
+
+# ---------------- EDA Round 1 ----------------
+percentiles: [.001, .01, .05, .25, .5, .75, .95, .99, .999]
+eda_round1:
+  numeric_columns:
+    - budget
+    - runtime
+    - release_year
+    - release_month
+    - release_quarter
+  categorical_columns:
+    - original_language
+  list_columns:
+    - genres_list
+    - keywords_list
+    - production_companies_list
+    - production_countries_list
+    - spoken_languages_list
+  text_columns:
+    - overview
+    - original_title
+    - tagline
+  target: bomb
+
+
+# ---------------- Feature Engineering ----------------
+feature_engineering:
+  categorical_vars:
+    genres_list:
+      list_col: true
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.8
+    keywords_list:
+      list_col: true
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.8
+    production_companies_list:
+      list_col: true
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.8
+    production_countries_list:
+      list_col: true
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.8
+    spoken_languages_list:
+      list_col: true
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.8
+    original_language:
+      list_col: false
+      min_count: 30
+      top_n: null
+      cumulative_pct: 0.9
+
+
+# ---------------- Postprocessing ----------------
+postprocessing:
+  winsorization:
+    budget: 1.0
+    budget_log: 1.0
+    runtime: 1.0
+    title_length: 1.0
+    overview_length: 1.0
+    tagline_length: 1.0
+  categorical_vars:
+  imputation:
+    numeric_impute_method: median
+    categorical_impute_method: most_frequent
+  test_train_split:
+    test_size: 0.2
+    random_state: 42
+
+
+# ---------------- SFA ----------------
+sfa:
+  numeric_columns:
+    - budget
+    - budget_log
+    - runtime
+    - title_length
+    - overview_length
+    - tagline_length
+  indicator_prefixes:
+    - genres_list_
+    - keywords_list_
+    - production_companies_list_
+    - production_countries_list_
+    - spoken_languages_list_
+    - original_language_
+    - has_homepage
+    - has_tagline
+    - is_summer
+  target: bomb
