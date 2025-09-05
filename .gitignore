@@ -17,3 +17,4 @@ venv/
 
 # Output files
 output/
+!output/modeling/sfa/structured_sfa.xlsx
