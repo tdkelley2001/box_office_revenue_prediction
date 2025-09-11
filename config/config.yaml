@@ -1,11 +1,12 @@
 # ---------------- Pipeline ----------------
 save_preprocessed_data: True
 do_round1_eda: False
+do_indicator_optimization: True
 save_feature_engineered_data: True
 do_round2_eda: False
 save_modeling_data: True
-do_sfa: True
-do_mfa: True
+do_sfa: False
+do_mfa: False
 
 
 # ---------------- Database ----------------
@@ -72,39 +73,47 @@ eda_round1:
   target: bomb
 
 
+# ---------------- Indicator Optimization ----------------
+optimization:
+  indicator_search:
+    max_n: 100  # optional cap, set to null or omit for unlimited
+    min_count: null # optional threshold, set to null or omit to not use
+    output_path: "output/modeling/eda/indicator_optimization"
+
+
 # ---------------- Feature Engineering ----------------
 feature_engineering:
   categorical_vars:
     genres_list:
       list_col: true
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.8
+      min_count: null
+      top_n: 4
+      cumulative_pct: null
     keywords_list:
       list_col: true
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.8
+      min_count: null
+      top_n: 14
+      cumulative_pct: null
     production_companies_list:
       list_col: true
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.8
+      min_count: null
+      top_n: 82
+      cumulative_pct: null
     production_countries_list:
       list_col: true
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.8
+      min_count: null
+      top_n: 2
+      cumulative_pct: null
     spoken_languages_list:
       list_col: true
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.8
+      min_count: null
+      top_n: 1
+      cumulative_pct: null
     original_language:
       list_col: false
-      min_count: 30
-      top_n: null
-      cumulative_pct: 0.9
+      min_count: null
+      top_n: 2
+      cumulative_pct: null
 
 
 # ---------------- Postprocessing ----------------
