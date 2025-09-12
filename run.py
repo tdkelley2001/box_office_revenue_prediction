@@ -7,6 +7,7 @@ from src.eda import run_eda_round1, run_eda_round2
 from src.indicator_optimization import optimize_indicators_by_n
 from src.postprocessing import postprocess_data
 from src.sfa import run_sfa
+from src.mfa import run_mfa
 import pandas as pd
 
 import warnings
@@ -82,7 +83,9 @@ if config.get("do_sfa", True):
 # ------------------------
 # Step 8: Run Multi-Factor Analysis
 # ------------------------
-# TODO: Develop MFA
+if config.get("do_mfa", True):
+    train_data = movies_model[movies_model["split"] == "train"]
+    run_mfa(train_data, config)
 
 
 print("Run complete!")
