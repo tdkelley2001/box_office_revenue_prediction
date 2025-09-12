@@ -65,7 +65,7 @@ def plot_var_results(var, results_df, writer):
     writer.sheets[sheet_name] = worksheet
 
     # Save temp image and insert
-    img_path = f"output/modeling/eda/indicator_optimization/{var}_opt.png"
+    img_path = f"output/modeling/eda/indicator_optimization/plots/{var}_opt.png"
     plt.savefig(img_path, bbox_inches="tight")
     worksheet.insert_image("B2", img_path)
 

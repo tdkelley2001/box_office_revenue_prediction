@@ -17,7 +17,7 @@ def run_single_var_regression(df, var, target, regularized):
     if temp[var].nunique() < 2:  # skip constants
         return None, None, None
     
-    X = sm.add_constant(temp[[var]])
+    X_const = sm.add_constant(temp[[var]])
     y = temp[target]
     warning_messages = []
 
@@ -28,9 +28,11 @@ def run_single_var_regression(df, var, target, regularized):
 
         try:
             if regularized:
-                model = sm.Logit(y, X).fit_regularized(disp=False)
+                model = sm.Logit(y, X_const).fit_regularized(disp=False)
+                pval = np.nan # fit_regularized does not provide p-values
             else:
-                model = sm.Logit(y, X).fit(disp=False)
+                model = sm.Logit(y, X_const).fit(disp=False)
+                pval = model.llr_pvalue
         except Exception:
             return None, None, None
         
@@ -38,7 +40,7 @@ def run_single_var_regression(df, var, target, regularized):
         if w:
             warnings_str = "; ".join([str(wi.message) for wi in w])
     
-    temp["pred"] = model.predict(X)
+    temp["pred"] = model.predict(X_const)
     auc = roc_auc_score(y, temp["pred"])
     gini = 2 * auc - 1
     stats = {
@@ -46,7 +48,7 @@ def run_single_var_regression(df, var, target, regularized):
         "n": len(temp),
         "missing_pct": df[var].isnull().mean(),
         "coef": model.params[var],
-        "p_value": model.pvalues[var],
+        "p_value": pval,
         "pseudo_r2": model.prsquared,
         "gini": gini,
         "mean": temp[var].mean(),
@@ -111,7 +113,7 @@ def run_sfa(df, config):
     indicator_vars = [col for col in df.columns if any(col.startswith(p) for p in indicator_prefixes)]
     vars_to_test = numeric_vars + indicator_vars
     target = config["target"]
-    regularized = config["optimization"]["indicator_search"].get("regularized", None)
+    regularized = config["sfa"].get("regularized", None)
 
     stats_list = []
     pdf_path = os.path.join(output_dir, f"sfa_plots_{ts}.pdf")

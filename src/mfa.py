@@ -1,6 +1,7 @@
 import os
 import itertools
 import pandas as pd
+import numpy as np
 import statsmodels.api as sm
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
@@ -19,7 +20,7 @@ def generate_combos(block_names, max_blocks=None):
     return combos
 
 
-def evaluate_mfa_model(df, target, features):
+def evaluate_mfa_model(df, target, features, regularized):
     """Fit logistic regression on given features, return metrics + VIF."""
     warnings_str = ""
     vif_warnings = ""
@@ -32,7 +33,12 @@ def evaluate_mfa_model(df, target, features):
         # Capture warnings during model fit
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            model = sm.Logit(y, X_const).fit(disp=False)
+            if regularized:
+                model = sm.Logit(y, X_const).fit_regularized(disp=False)
+                pval = np.nan # fit_regularized does not provide p-values
+            else:
+                model = sm.Logit(y, X_const).fit(disp=False)
+                pval = model.llr_pvalue
 
             if w:
                 warnings_str = "; ".join([str(wi.message) for wi in w])
@@ -58,7 +64,7 @@ def evaluate_mfa_model(df, target, features):
             "features": features,
             "aic": model.aic,
             "gini": gini,
-            "pval": model.llr_pvalue,
+            "pval": pval,
             "vif": vif_df.to_dict(orient="records"),
             "warnings": {"model": warnings_str, "vif": vif_warnings}
         }
@@ -86,6 +92,7 @@ def run_mfa(df, config):
     single_vars = config["mfa"].get("single_vars", [])
     categorical_blocks = config["mfa"].get("categorical_blocks", {})
     max_blocks = config["mfa"].get("max_blocks", None)
+    regularized = config["mfa"].get("regularized", None)
     output_path = config["mfa"].get("output_path", None)
 
     # ---- Expand categorical blocks into full column lists

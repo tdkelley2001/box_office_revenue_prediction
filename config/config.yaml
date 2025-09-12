@@ -79,7 +79,7 @@ optimization:
   indicator_search:
     max_n: 100  # optional cap, set to null or omit for unlimited
     min_count: null # optional threshold, set to null or omit to not use
-    regularized: True
+    regularized: False
     output_path: "output/modeling/eda/indicator_optimization"
 
 
@@ -155,7 +155,7 @@ sfa:
     - has_homepage
     - has_tagline
     - is_summer
-  regularized: True
+  regularized: False
 
 
   # ---------------- MFA ----------------
@@ -177,5 +177,5 @@ mfa:
     - spoken_languages_list_
     - original_language_
   max_blocks: null          # maximum number of blocks (numeric or categorical) in a model
-  regularized: True
+  regularized: False
   output_path: "output/modeling/mfa"
