@@ -80,7 +80,7 @@ optimization:
     max_n: 100  # optional cap, set to null or omit for unlimited
     min_count: null # optional threshold, set to null or omit to not use
     regularized: False
-    output_path: "output/modeling/eda/indicator_optimization"
+    output_path: "output/modeling/eda/indicator_optimization/raw"
 
 
 # ---------------- Feature Engineering ----------------
@@ -99,7 +99,7 @@ feature_engineering:
     production_companies_list:
       list_col: true
       min_count: null
-      top_n: 82 # Should be 82 according to aic
+      top_n: 61 # Should be 82 according to aic, 61 when excluding non-converging models
       cumulative_pct: null
     production_countries_list:
       list_col: true
@@ -177,5 +177,5 @@ mfa:
     - spoken_languages_list_
     - original_language_
   max_blocks: null          # maximum number of blocks (numeric or categorical) in a model
-  regularized: False
+  regularized: True
   output_path: "output/modeling/mfa"

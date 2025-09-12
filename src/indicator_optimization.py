@@ -5,6 +5,7 @@ import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+import warnings
 from src.preprocessing import create_indicators, get_counts
 from src.utils import ts, safe_sheet_name
 
@@ -16,20 +17,28 @@ def evaluate_indicators(df, target, indicator_cols, regularized):
         y = df[target]
         X_const = sm.add_constant(X)
 
-        if regularized:
-            model = sm.Logit(y, X_const).fit_regularized(disp=False)
-            pval = np.nan # fit_regularized does not provide p-values
-        else:
-            model = sm.Logit(y, X_const).fit(disp=False)
-            pval = model.llr_pvalue
+        warnings_str = ""
+        # Capture warnings during model fit
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            if regularized:
+                model = sm.Logit(y, X_const).fit_regularized(disp=False)
+                pval = np.nan # fit_regularized does not provide p-values
+            else:
+                model = sm.Logit(y, X_const).fit(disp=False)
+                pval = model.llr_pvalue
+            
+            if w:
+                warnings_str = "; ".join([str(wi.message) for wi in w])
 
         # Pseudo-Gini from ROC
         pred = model.predict(X_const)
         auc = roc_auc_score(y, pred)
         gini = 2 * auc - 1
-        return gini, pval, model.aic
+        return gini, pval, model.aic, warnings_str
     except Exception:
-        return np.nan, np.nan, np.inf
+        return np.nan, np.nan, np.inf, warnings_str
 
 
 def plot_var_results(var, results_df, writer):
@@ -112,7 +121,7 @@ def optimize_indicators_by_n(df, config):
             if not indicator_cols:
                 continue
 
-            gini, pval, aic = evaluate_indicators(df_copy, target, indicator_cols, regularized)
+            gini, pval, aic, warnings_str = evaluate_indicators(df_copy, target, indicator_cols, regularized)
 
             all_results.append({
                 "var": var,
@@ -120,7 +129,8 @@ def optimize_indicators_by_n(df, config):
                 "n_indicators": len(indicator_cols),
                 "gini": gini,
                 "pval": pval,
-                "aic": aic
+                "aic": aic,
+                "warnings": warnings_str
             })
 
     results_df = pd.DataFrame(all_results)
