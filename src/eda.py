@@ -14,7 +14,7 @@ def run_eda_round1(df, config):
     categorical_cols = config["eda_round1"]["categorical_columns"]
     list_cols = config["eda_round1"]["list_columns"]
     text_cols = config["eda_round1"]["text_columns"]
-    target_col = config["eda_round1"]["target"]
+    target_col = config["target"]
     
     
     # Parse list columns if loaded from CSV
@@ -130,7 +130,7 @@ def run_eda_round2(df, config):
 
     numeric_cols = config["sfa"]["numeric_columns"]
     indicator_prefixes = config["sfa"]["indicator_prefixes"]
-    target_col = config["sfa"]["target"]
+    target_col = config["target"]
 
     # Timestamped output file
     excel_path = os.path.join(output_dir, f"eda_round2_{ts}.xlsx")

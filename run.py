@@ -4,8 +4,10 @@ from src.loader import load_data, load_latest_from_pointer
 from src.preprocessing import preprocess_data, run_feature_engineering
 from src.saver import save_cleaned_data
 from src.eda import run_eda_round1, run_eda_round2
+from src.indicator_optimization import optimize_indicators_by_n
 from src.postprocessing import postprocess_data
 from src.sfa import run_sfa
+from src.mfa import run_mfa
 import pandas as pd
 
 import warnings
@@ -35,7 +37,14 @@ if config.get("do_round1_eda", True):
 
 
 # ------------------------
-# Step 3: Feature Engineering
+# Step 3: Optimize Indicators
+# ------------------------
+if config.get("do_indicator_optimization", True):
+    optimize_indicators_by_n(movies_cleaned, config)
+
+
+# ------------------------
+# Step 4: Feature Engineering
 # ------------------------
 movies_fe = load_latest_from_pointer(config["output"]["feature_engineered_data"]["pointer"])
 if movies_fe is None:
@@ -46,14 +55,14 @@ if movies_fe is None:
 
 
 # ------------------------
-# Step 4: Run Round 2 EDA (on FE dataset)
+# Step 5: Run Round 2 EDA (on FE dataset)
 # ------------------------
 if config.get("do_round2_eda", True):
     run_eda_round2(movies_fe, config)
 
 
 # ------------------------
-# Step 5: Postprocessing / Modeling Prep
+# Step 6: Postprocessing / Modeling Prep
 # ------------------------
 movies_model = load_latest_from_pointer(config["output"]["model_data"]["pointer"])
 if movies_model is None:
@@ -64,7 +73,7 @@ if movies_model is None:
 
 
 # ------------------------
-# Step 5: Run Single-Factor Analysis
+# Step 7: Run Single-Factor Analysis
 # ------------------------
 if config.get("do_sfa", True):
     train_data = movies_model[movies_model["split"] == "train"]
@@ -72,9 +81,11 @@ if config.get("do_sfa", True):
 
 
 # ------------------------
-# Step 6: Run Multi-Factor Analysis
+# Step 8: Run Multi-Factor Analysis
 # ------------------------
-# TODO: Develop MFA
+if config.get("do_mfa", True):
+    train_data = movies_model[movies_model["split"] == "train"]
+    run_mfa(train_data, config)
 
 
 print("Run complete!")

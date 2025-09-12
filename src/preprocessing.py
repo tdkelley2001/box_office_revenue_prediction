@@ -82,20 +82,28 @@ def apply_min_count(counts, keep_levels, min_count=None):
 
 def create_indicator_columns(df, var, keep_levels, list_col=True):
     """Create indicator columns for the selected levels, plus an 'Other' column."""
-    for level in keep_levels:
-        colname = f"{var}_{level}"
-        if list_col:
-            df[colname] = df[var].apply(lambda x: int(level in x) if isinstance(x, list) else 0)
-        else:
-            df[colname] = (df[var] == level).astype(int)
-
-    # 'Other' column
+    new_cols = {}
     if list_col:
-        df[f"{var}_Other"] = df[var].apply(
-            lambda x: int(any(i not in keep_levels for i in x)) if isinstance(x, list) else 0
-        )
+        for level in keep_levels:
+            new_cols[f"{var}_{level}"] = df[var].apply(lambda x: int(level in x) if isinstance(x, list) else 0)
+        
+        # Only create 'Other' if any value falls outside keep_levels
+        other_mask = df[var].apply(lambda x: any(i not in keep_levels for i in x) if isinstance(x, list) else False)
+        if other_mask.any():
+            new_cols[f"{var}_Other"] = other_mask.astype(int)
+
     else:
-        df[f"{var}_Other"] = (~df[var].isin(keep_levels)).astype(int)
+        for level in keep_levels:
+            new_cols[f"{var}_{level}"] = (df[var] == level).astype(int)
+        
+        # Only create 'Other' if any value falls outside keep_levels
+        other_mask = ~df[var].isin(keep_levels)
+        if other_mask.any():
+            new_cols[f"{var}_Other"] = other_mask.astype(int)
+
+    # Add all new columns at once to reduce fragmentation
+    if new_cols:
+        df = pd.concat([df, pd.DataFrame(new_cols, index=df.index)], axis=1)
 
     return df
 

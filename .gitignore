@@ -17,4 +17,5 @@ venv/
 
 # Output files
 output/
+!output/modeling/eda/indicator_optimization/structured_indicator_optimization.xlsx
 !output/modeling/sfa/structured_sfa.xlsx
