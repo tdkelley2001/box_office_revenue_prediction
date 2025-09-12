@@ -174,7 +174,6 @@ mfa:
     - keywords_list_
     - production_companies_list_
     - production_countries_list_
-    - spoken_languages_list_
     - original_language_
   max_blocks: null          # maximum number of blocks (numeric or categorical) in a model
   regularized: True
