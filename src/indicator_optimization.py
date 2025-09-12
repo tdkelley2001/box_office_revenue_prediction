@@ -92,7 +92,7 @@ def optimize_indicators_by_n(df, config):
     max_n_cap = config["optimization"]["indicator_search"].get("max_n")
     min_count = config["optimization"]["indicator_search"].get("min_count", None)
     regularized = config["optimization"]["indicator_search"].get("regularized", None)
-    output_path = config["optimization"]["indicator_search"].get("output_path", None)
+    output_path = config["output"]["ind_opt_dir"]
     
     feature_engineering = config["feature_engineering"]
     target = config["target"]

@@ -116,8 +116,8 @@ def run_sfa(df, config):
     regularized = config["sfa"].get("regularized", None)
 
     stats_list = []
-    pdf_path = os.path.join(output_dir, f"sfa_plots_{ts}.pdf")
-    excel_path = os.path.join(output_dir, f"sfa_stats_{ts}.xlsx")
+    pdf_path = os.path.join(output_dir, f"plots/sfa_plots_{ts}.pdf")
+    excel_path = os.path.join(output_dir, f"raw/sfa_stats_{ts}.xlsx")
 
     pdf = PdfPages(pdf_path)
 

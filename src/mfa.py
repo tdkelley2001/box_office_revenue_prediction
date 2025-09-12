@@ -93,7 +93,7 @@ def run_mfa(df, config):
     categorical_blocks = config["mfa"].get("categorical_blocks", {})
     max_blocks = config["mfa"].get("max_blocks", None)
     regularized = config["mfa"].get("regularized", None)
-    output_path = config["mfa"].get("output_path", None)
+    output_path = config["output"]["mfa_dir"]
 
     # ---- Expand categorical blocks into full column lists
     block_map = {}
