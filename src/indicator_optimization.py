@@ -9,15 +9,22 @@ from src.preprocessing import create_indicators, get_counts
 from src.utils import ts, safe_sheet_name
 
 
-def evaluate_indicators(df, target, indicator_cols):
+def evaluate_indicators(df, target, indicator_cols, regularized):
     """Fit univariate logistic regression on combined indicators, return Gini, p-value, and AIC."""
     try:
         X = df[indicator_cols]
         y = df[target]
-        model = sm.Logit(y, sm.add_constant(X)).fit(disp=False)
-        pval = model.llr_pvalue
+        X_const = sm.add_constant(X)
+
+        if regularized:
+            model = sm.Logit(y, X_const).fit_regularized(disp=False)
+            pval = np.nan # fit_regularized does not provide p-values
+        else:
+            model = sm.Logit(y, X_const).fit(disp=False)
+            pval = model.llr_pvalue
+
         # Pseudo-Gini from ROC
-        pred = model.predict(sm.add_constant(X))
+        pred = model.predict(X_const)
         auc = roc_auc_score(y, pred)
         gini = 2 * auc - 1
         return gini, pval, model.aic
@@ -75,10 +82,12 @@ def optimize_indicators_by_n(df, config):
 
     max_n_cap = config["optimization"]["indicator_search"].get("max_n")
     min_count = config["optimization"]["indicator_search"].get("min_count", None)
+    regularized = config["optimization"]["indicator_search"].get("regularized", None)
     output_path = config["optimization"]["indicator_search"].get("output_path", None)
     
     feature_engineering = config["feature_engineering"]
-    target = config["sfa"]["target"]
+    target = config["target"]
+    
 
     total_vars = len(feature_engineering["categorical_vars"])
 
@@ -103,7 +112,7 @@ def optimize_indicators_by_n(df, config):
             if not indicator_cols:
                 continue
 
-            gini, pval, aic = evaluate_indicators(df_copy, target, indicator_cols)
+            gini, pval, aic = evaluate_indicators(df_copy, target, indicator_cols, regularized)
 
             all_results.append({
                 "var": var,
@@ -117,13 +126,22 @@ def optimize_indicators_by_n(df, config):
     results_df = pd.DataFrame(all_results)
 
     # Select best per variable
-    best_results = (
-        results_df
-        .sort_values(["var", "aic", "gini"], ascending=[True, True, False])
-        .groupby("var")
-        .head(1)
-        .reset_index(drop=True)
-    )
+    if regularized:
+        best_results = (
+            results_df
+            .sort_values(["var", "gini", "n_indicators"], ascending=[True, False, True])
+            .groupby("var")
+            .head(1)
+            .reset_index(drop=True)
+        )
+    else:
+        best_results = (
+            results_df
+            .sort_values(["var", "aic", "gini"], ascending=[True, True, False])
+            .groupby("var")
+            .head(1)
+            .reset_index(drop=True)
+        )
 
     # Save if requested
     if output_path:

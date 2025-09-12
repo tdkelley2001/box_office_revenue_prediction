@@ -14,6 +14,8 @@ database:
   path: "sql/box_office.db"
   table: "movies_cleaned"
 
+target: bomb
+
 
 # ---------------- Output ----------------
 output:
@@ -70,7 +72,6 @@ eda_round1:
     - overview
     - original_title
     - tagline
-  target: bomb
 
 
 # ---------------- Indicator Optimization ----------------
@@ -78,6 +79,7 @@ optimization:
   indicator_search:
     max_n: 100  # optional cap, set to null or omit for unlimited
     min_count: null # optional threshold, set to null or omit to not use
+    regularized: True
     output_path: "output/modeling/eda/indicator_optimization"
 
 
@@ -87,32 +89,32 @@ feature_engineering:
     genres_list:
       list_col: true
       min_count: null
-      top_n: 4
+      top_n: 4 # Should be 4 according to aic
       cumulative_pct: null
     keywords_list:
       list_col: true
       min_count: null
-      top_n: 14
+      top_n: 14 # Should be 14 according to aic
       cumulative_pct: null
     production_companies_list:
       list_col: true
       min_count: null
-      top_n: 82
+      top_n: 82 # Should be 82 according to aic
       cumulative_pct: null
     production_countries_list:
       list_col: true
       min_count: null
-      top_n: 2
+      top_n: 2 # Should be 2 according to aic
       cumulative_pct: null
     spoken_languages_list:
       list_col: true
       min_count: null
-      top_n: 1
+      top_n: 1 # Should be 1 according to aic
       cumulative_pct: null
     original_language:
       list_col: false
       min_count: null
-      top_n: 2
+      top_n: 2 # Should be 2 according to aic
       cumulative_pct: null
 
 
@@ -153,4 +155,27 @@ sfa:
     - has_homepage
     - has_tagline
     - is_summer
-  target: bomb
+  regularized: True
+
+
+  # ---------------- MFA ----------------
+mfa:
+  single_vars:
+    - budget
+    - runtime
+    - title_length
+    - overview_length
+    - tagline_length
+    - has_homepage
+    - has_tagline
+    - is_summer
+  categorical_blocks:
+    - genres_list_
+    - keywords_list_
+    - production_companies_list_
+    - production_countries_list_
+    - spoken_languages_list_
+    - original_language_
+  max_blocks: null          # maximum number of blocks (numeric or categorical) in a model
+  regularized: True
+  output_path: "output/modeling/mfa"

@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -10,18 +11,32 @@ from src.utils import ts, safe_sheet_name
 import matplotlib
 matplotlib.use("Agg")  # non-interactive backend (no figure popping up)
 
-def run_single_var_regression(df, var, target):
+def run_single_var_regression(df, var, target, regularized):
     """Run single-variable logistic regression and return stats + predictions."""
     temp = df[[var, target]].dropna()
     if temp[var].nunique() < 2:  # skip constants
-        return None, None
+        return None, None, None
     
     X = sm.add_constant(temp[[var]])
     y = temp[target]
-    try:
-        model = sm.Logit(y, X).fit(disp=False)
-    except Exception:
-        return None, None
+    warning_messages = []
+
+    # Capture warnings during fitting
+    warnings_str = ""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        try:
+            if regularized:
+                model = sm.Logit(y, X).fit_regularized(disp=False)
+            else:
+                model = sm.Logit(y, X).fit(disp=False)
+        except Exception:
+            return None, None, None
+        
+        # If any warnings occurred, join them into a single string
+        if w:
+            warnings_str = "; ".join([str(wi.message) for wi in w])
     
     temp["pred"] = model.predict(X)
     auc = roc_auc_score(y, temp["pred"])
@@ -35,8 +50,12 @@ def run_single_var_regression(df, var, target):
         "pseudo_r2": model.prsquared,
         "gini": gini,
         "mean": temp[var].mean(),
-        "std": temp[var].std()
+        "std": temp[var].std(),
+        "warnings": warnings_str
     }
+
+    warnings_str = "; ".join(warning_messages) if warning_messages else None
+
     return model, stats, temp
 
 
@@ -90,8 +109,9 @@ def run_sfa(df, config):
     numeric_vars = config["sfa"]["numeric_columns"].copy()
     indicator_prefixes = config["sfa"].get("indicator_prefixes", [])
     indicator_vars = [col for col in df.columns if any(col.startswith(p) for p in indicator_prefixes)]
-    vars_to_test = numeric_vars.extend(indicator_vars)
-    target = config["sfa"]["target"]
+    vars_to_test = numeric_vars + indicator_vars
+    target = config["target"]
+    regularized = config["optimization"]["indicator_search"].get("regularized", None)
 
     stats_list = []
     pdf_path = os.path.join(output_dir, f"sfa_plots_{ts}.pdf")
@@ -100,7 +120,7 @@ def run_sfa(df, config):
     pdf = PdfPages(pdf_path)
 
     for var in vars_to_test:
-        model, stats, temp = run_single_var_regression(df, var, target)
+        model, stats, temp = run_single_var_regression(df, var, target, regularized)
         if model is None:
             continue
         stats_list.append(stats)
