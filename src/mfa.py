@@ -128,7 +128,7 @@ def run_mfa(df, config):
 
     # ---- Save results
     if output_path:
-        excel_path = os.path.join(output_path, f"sfa_stats_{ts}.xlsx")
+        excel_path = os.path.join(output_path, f"mfa_stats_{ts}.xlsx")
         with pd.ExcelWriter(excel_path, engine="xlsxwriter") as writer:
             results_df.to_excel(writer, sheet_name="MFA_Results", index=False)
 

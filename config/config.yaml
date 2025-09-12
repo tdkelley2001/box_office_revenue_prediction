@@ -5,8 +5,8 @@ do_indicator_optimization: False
 save_feature_engineered_data: True
 do_round2_eda: False
 save_modeling_data: True
-do_sfa: True
-do_mfa: False
+do_sfa: False
+do_mfa: True
 
 
 # ---------------- Database ----------------
